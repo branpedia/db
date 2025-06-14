@@ -1,1 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redeem Code - Branpedia</title>
+    <script src="https://unpkg.com/@vercel/kv@latest/dist/index.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-hover: #2980b9;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-gray: #ecf0f1;
+            --dark-gray: #7f8c8d;
+            --text-color: #2c3e50;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            margin: auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .description {
+            margin-bottom: 20px;
+            color: var(--dark-gray);
+        }
+
+        .redeem-form {
+            margin: 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #redeemCode {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        #redeemCode:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        #redeemBtn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        #redeemBtn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        #redeemBtn:disabled {
+            background-color: var(--dark-gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-container {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .win {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #155724;
+            border: 1px solid rgba(46, 204, 113, 0.5);
+        }
+
+        .lose {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #721c24;
+            border: 1px solid rgba(231, 76, 60, 0.5);
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-color);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+            width: 100%;
+        }
+
+        .alert-warning {
+            background-color: rgba(243, 156, 18, 0.2);
+            color: #856404;
+            border: 1px solid rgba(243, 156, 18, 0.5);
+        }
+
+        .alert-info {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #0c5460;
+            border: 1px solid rgba(52, 152, 219, 0.5);
+        }
+
+        .history-panel {
+            margin-top: 30px;
+            text-align: left;
+            background-color: var(--light-gray);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .history-panel h3 {
+            margin-top: 0;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .history-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .prize-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .prize-success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #155724;
+        }
+
+        .prize-danger {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #721c24;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            text-align: center;
+            width: 100%;
+            gap: 10px;
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 10px;
+            background-color: var(--light-gray);
+            border-radius: var(--border-radius);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--dark-gray);
+            text-transform: uppercase;
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            text-align: left;
+            width: 100%;
+            background-color: var(--light-gray);
+            padding: 15px;
+            border-radius: var(--border-radius);
+        }
+
+        .info-panel h3 {
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .info-panel ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info-panel li {
+            margin-bottom: 5px;
+        }
+
+        /* Confetti styles */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎁 Redeem Code Branpedia</h1>
+        <p class="description">Masukkan kode redeem Anda untuk kesempatan memenangkan hadiah eksklusif!</p>
+        
+        <div id="usedCodeAlert" class="alert alert-warning">
+            Kode ini sudah digunakan sebelumnya dan tidak dapat digunakan lagi.
+        </div>
+        
+        <div id="infoAlert" class="alert alert-info">
+            Kode valid! Klik tombol Redeem untuk mencoba keberuntungan Anda.
+        </div>
+        
+        <div class="redeem-form">
+            <input type="text" id="redeemCode" placeholder="Masukkan kode redeem (contoh: BRANPEDIA)" autocomplete="off">
+            <button id="redeemBtn">Redeem Sekarang</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalRedeems">0</div>
+                <div class="stat-label">Total Redeem</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="winCount">0</div>
+                <div class="stat-label">Menang</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="loseCount">0</div>
+                <div class="stat-label">Zonk</div>
+            </div>
+        </div>
+        
+        <div id="result" class="result-container"></div>
+        
+        <div class="history-panel">
+            <h3>Riwayat Redeem Terakhir</h3>
+            <ul id="historyList" class="history-list">
+                <li>Memuat riwayat...</li>
+            </ul>
+        </div>
+        
+        <div class="info-panel">
+            <h3>📢 Informasi Hadiah</h3>
+            <ul>
+                <li><strong>Paket Internet 10GB</strong> (10% chance)</li>
+                <li><strong>Pulsa 50.000</strong> (10% chance)</li>
+                <li><strong>Voucher Netflix 1 Bulan</strong> (10% chance)</li>
+                <li><strong>Voucher Spotify Premium</strong> (10% chance)</li>
+                <li><strong>Zonk</strong> (60% chance)</li>
+            </ul>
+            <p><strong>⚠️ Perhatian:</strong> Setiap kode hanya bisa digunakan sekali saja!</p>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize Vercel KV
+            const kv = new VercelKV({
+                url: 'https://your-vercel-kv-endpoint.vercel.app',
+                token: 'your-vercel-kv-token'
+            });
+            
+            // DOM Elements
+            const redeemBtn = document.getElementById('redeemBtn');
+            const redeemCodeInput = document.getElementById('redeemCode');
+            const resultDiv = document.getElementById('result');
+            const usedCodeAlert = document.getElementById('usedCodeAlert');
+            const infoAlert = document.getElementById('infoAlert');
+            const historyList = document.getElementById('historyList');
+            const totalRedeemsDisplay = document.getElementById('totalRedeems');
+            const winCountDisplay = document.getElementById('winCount');
+            const loseCountDisplay = document.getElementById('loseCount');
+            
+            // Event listeners
+            redeemCodeInput.addEventListener('input', checkCode);
+            redeemBtn.addEventListener('click', processRedeem);
+            
+            // Load initial data
+            await loadInitialData();
+            
+            // Check code availability
+            async function checkCode() {
+                const code = redeemCodeInput.value.trim();
+                
+                usedCodeAlert.style.display = 'none';
+                infoAlert.style.display = 'none';
+                
+                if (code.length === 0) {
+                    redeemBtn.disabled = true;
+                    return;
+                }
+                
+                try {
+                    const usedCodes = await kv.get('used_codes') || [];
+                    const isUsed = usedCodes.some(usedCode => 
+                        usedCode.toLowerCase() === code.toLowerCase()
+                    );
+                    
+                    if (isUsed) {
+                        usedCodeAlert.style.display = 'block';
+                        redeemBtn.disabled = true;
+                    } else if (code.length >= 3) {
+                        infoAlert.style.display = 'block';
+                        redeemBtn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error checking code:', error);
+                    showError('Gagal memeriksa kode. Silakan coba lagi.');
+                }
+            }
+            
+            // Process redeem
+            async function processRedeem() {
+                const code = redeemCodeInput.value.trim();
+                if (!code) return;
+                
+                // UI changes
+                redeemBtn.disabled = true;
+                redeemBtn.innerHTML = 'Memproses <span class="spinner"></span>';
+                resultDiv.style.display = 'none';
+                usedCodeAlert.style.display = 'none';
+                infoAlert.style.display = 'none';
+                
+                try {
+                    const result = await redeemCode(code);
+                    displayResult(result, code);
+                    await loadInitialData(); // Refresh data after redeem
+                } catch (error) {
+                    console.error('Redeem error:', error);
+                    showError('Terjadi kesalahan saat memproses redeem.');
+                } finally {
+                    redeemCodeInput.value = '';
+                    redeemBtn.disabled = false;
+                    redeemBtn.textContent = 'Redeem Sekarang';
+                    checkCode();
+                }
+            }
+            
+            // Redeem code logic
+            async function redeemCode(code) {
+                // Validate code
+                if (!code) {
+                    return {
+                        success: false,
+                        message: 'Kode tidak valid',
+                        prize: null
+                    };
+                }
+                
+                // Check if code already used
+                const usedCodes = await kv.get('used_codes') || [];
+                const lowerCode = code.toLowerCase();
+                
+                if (usedCodes.some(c => c.toLowerCase() === lowerCode)) {
+                    return {
+                        success: false,
+                        message: 'Kode sudah digunakan',
+                        prize: null
+                    };
+                }
+                
+                // Determine prize
+                const prizes = [
+                    {name: 'Paket Internet 10GB', probability: 0.1},
+                    {name: 'Pulsa 50.000', probability: 0.1},
+                    {name: 'Voucher Netflix 1 Bulan', probability: 0.1},
+                    {name: 'Voucher Spotify Premium', probability: 0.1},
+                    {name: 'Zonk', probability: 0.6}
+                ];
+                
+                const random = Math.random();
+                let cumulativeProbability = 0;
+                let selectedPrize = 'Zonk';
+                
+                for (const prize of prizes) {
+                    cumulativeProbability += prize.probability;
+                    if (random <= cumulativeProbability) {
+                        selectedPrize = prize.name;
+                        break;
+                    }
+                }
+                
+                // Save to database
+                const log = {
+                    code: code,
+                    prize: selectedPrize,
+                    redeemed_at: new Date().toISOString(),
+                    timestamp: Date.now()
+                };
+                
+                // Update used codes
+                const newUsedCodes = [...usedCodes, code];
+                await kv.set('used_codes', newUsedCodes);
+                
+                // Update logs
+                const logs = await kv.get('redeem_logs') || [];
+                logs.unshift(log);
+                await kv.set('redeem_logs', logs.slice(0, 50)); // Keep only last 50 logs
+                
+                // Update stats
+                const stats = await kv.get('redeem_stats') || { total: 0, wins: 0, loses: 0 };
+                stats.total++;
+                if (selectedPrize === 'Zonk') {
+                    stats.loses++;
+                } else {
+                    stats.wins++;
+                }
+                await kv.set('redeem_stats', stats);
+                
+                // Return result
+                if (selectedPrize !== 'Zonk') {
+                    createConfetti();
+                    return {
+                        success: true,
+                        prize: selectedPrize,
+                        message: 'Selamat! Anda memenangkan hadiah!'
+                    };
+                } else {
+                    return {
+                        success: false,
+                        prize: 'Zonk',
+                        message: 'Maaf, Anda belum beruntung.'
+                    };
+                }
+            }
+            
+            // Display result
+            function displayResult(result, code) {
+                resultDiv.style.display = 'block';
+                
+                if (result.success) {
+                    resultDiv.className = 'result-container win';
+                    resultDiv.innerHTML = `
+                        <h2>🎉 Selamat!</h2>
+                        <p>Anda mendapatkan: <strong>${result.prize}</strong></p>
+                        <p>Kode: <code>${code}</code></p>
+                        <p>Hadiah akan dikirim ke email Anda dalam 1x24 jam.</p>
+                        <p><small>Waktu redeem: ${new Date().toLocaleString()}</small></p>
+                    `;
+                } else {
+                    resultDiv.className = 'result-container lose';
+                    resultDiv.innerHTML = `
+                        <h2>😢 ${result.prize ? 'Zonk!' : 'Error'}</h2>
+                        <p>${result.message}</p>
+                        ${code ? `<p>Kode: <code>${code}</code></p>` : ''}
+                        <p><small>Waktu redeem: ${new Date().toLocaleString()}</small></p>
+                    `;
+                }
+            }
+            
+            // Load initial data
+            async function loadInitialData() {
+                try {
+                    // Load stats
+                    const stats = await kv.get('redeem_stats') || { total: 0, wins: 0, loses: 0 };
+                    totalRedeemsDisplay.textContent = stats.total;
+                    winCountDisplay.textContent = stats.wins;
+                    loseCountDisplay.textContent = stats.loses;
+                    
+                    // Load history
+                    const logs = await kv.get('redeem_logs') || [];
+                    updateHistory(logs);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    showError('Gagal memuat data. Silakan refresh halaman.');
+                }
+            }
+            
+            // Update history list
+            function updateHistory(logs) {
+                historyList.innerHTML = '';
+                
+                if (logs.length === 0) {
+                    historyList.innerHTML = '<li>Belum ada riwayat redeem</li>';
+                    return;
+                }
+                
+                logs.slice(0, 5).forEach(log => {
+                    const li = document.createElement('li');
+                    li.className = 'history-item';
+                    
+                    const isWin = log.prize !== 'Zonk';
+                    const prizeClass = isWin ? 'prize-success' : 'prize-danger';
+                    
+                    li.innerHTML = `
+                        <span>
+                            <strong>${log.code}</strong>
+                            <small>(${new Date(log.redeemed_at).toLocaleTimeString()})</small>
+                        </span>
+                        <span class="prize-badge ${prizeClass}">${log.prize}</span>
+                    `;
+                    
+                    historyList.appendChild(li);
+                });
+            }
+            
+            // Show error message
+            function showError(message) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result-container lose';
+                resultDiv.innerHTML = `
+                    <h2>Error</h2>
+                    <p>${message}</p>
+                `;
+            }
+            
+            // Confetti effect
+            function createConfetti() {
+                const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff'];
+                
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.top = '-10px';
+                    confetti.style.width = `${Math.random() * 10 + 5}px`;
+                    confetti.style.height = `${Math.random() * 10 + 5}px`;
+                    
+                    document.body.appendChild(confetti);
+                    
+                    const animationDuration = Math.random() * 3 + 2;
+                    
+                    confetti.animate([
+                        { top: '-10px', opacity: 1, transform: 'rotate(0deg)' },
+                        { top: '100vh', opacity: 0, transform: 'rotate(360deg)' }
+                    ], {
+                        duration: animationDuration * 1000,
+                        easing: 'cubic-bezier(0.1, 0.8, 0.9, 1)'
+                    });
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, animationDuration * 1000);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
